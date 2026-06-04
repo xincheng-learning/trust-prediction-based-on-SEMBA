@@ -47,6 +47,8 @@ class GraphAttentionEmbedding(torch.nn.Module):
 
     def forward(self, feats, x, last_update, edge_index, t, msg):
 
+        if msg.ndim == 1:
+            msg = msg.view(-1, 1)
         if last_update is not None:
             last_update = torch.max(last_update, 1)[0] if last_update.ndim == 2 else last_update
             rel_t = last_update[edge_index[0]] - t
