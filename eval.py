@@ -33,7 +33,7 @@ def test(args, inference_data, inference_type='val'):
         pos_edge_index_batch = torch.cat([pos_edge_index_train, pos_edge_index_val], -1)
         neg_edge_index_batch = torch.cat([neg_edge_index_train, neg_edge_index_val], -1)
         
-    for batch_id, batch in enumerate(inference_data.seq_batches(batch_size=args.batch_size)):
+    for batch_id, batch in enumerate(seq_batches(inference_data, batch_size=args.batch_size)):
 
         src, dst, t, weight, signs = batch.src, batch.dst, batch.t, batch.msg, batch.y
         src_pos, dst_pos, t_pos, weight_pos = src[signs == 1], dst[signs == 1], \

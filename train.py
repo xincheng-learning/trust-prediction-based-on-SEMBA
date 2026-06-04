@@ -27,7 +27,7 @@ def train(args):
     model.train()
     total_loss, probabilities, pred, true = 0, [], [], []
     total_events = 0
-    for batch_id, batch in enumerate(train_data.seq_batches(batch_size=args.batch_size)):
+    for batch_id, batch in enumerate(seq_batches(train_data, batch_size=args.batch_size)):
         optimizer.zero_grad()
         
         src, dst, t, weight, signs = batch.src, batch.dst, batch.t, batch.msg, batch.y
@@ -106,7 +106,7 @@ def test(args, inference_data, inference_type='val'):
         pos_edge_index_batch = torch.cat([pos_edge_index_train, pos_edge_index_val], -1)
         neg_edge_index_batch = torch.cat([neg_edge_index_train, neg_edge_index_val], -1)
         
-    for batch_id, batch in enumerate(inference_data.seq_batches(batch_size=args.batch_size)):
+    for batch_id, batch in enumerate(seq_batches(inference_data, batch_size=args.batch_size)):
 
         src, dst, t, weight, signs = batch.src, batch.dst, batch.t, batch.msg, batch.y
         src_pos, dst_pos, t_pos, weight_pos = src[signs == 1], dst[signs == 1], \
@@ -255,13 +255,13 @@ if __name__ == '__main__':
         val_loss, val_params = test(args, val_data, epoch)
         lr_scheduler(val_loss)
         print(f'E{epoch:002d} Tr [Loss: {train_loss:.4f} {metric_string(train_params)}]')
-        print(f'Val [Loss: {val_loss:.4f} {metric_string(train_params)}]')
+        print(f'Val [Loss: {val_loss:.4f} {metric_string(val_params)}]')
         print(f'Time: {time_epch}')
         print()
     
-    test_loss, test_params = test(args, test_data, epoch, 'test')
-    test_trans_loss, test_trans_params = test(args, test_trans_data, epoch, 'test')
-    test_ind_loss, test_ind_params = test(args, test_ind_data, epoch, 'test')
+    test_loss, test_params = test(args, test_data, 'test')
+    test_trans_loss, test_trans_params = test(args, test_trans_data, 'test')
+    test_ind_loss, test_ind_params = test(args, test_ind_data, 'test')
     print(f"Time taken: {total_time}")
     print('*****************')
     print('Overall performance')

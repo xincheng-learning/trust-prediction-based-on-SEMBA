@@ -3,9 +3,6 @@ import math
 import numpy as np
 from torch.nn import functional as F
 
-from baselines.caw.caw import CAWN
-from baselines.sdgnn.sdgnn import SDGNN
-from baselines.sgcn.sgcn import SignedGCN
 from baselines.sigat.sigat import SiGAT
 from torch_geometric.utils import (negative_sampling,
                                    structured_negative_sampling)
@@ -16,6 +13,27 @@ from torch_geometric.nn import GCNConv, GATConv, SAGEConv, TransformerConv, Sign
 from torch.nn import Linear, ReLU, LSTM
 from torch_geometric.nn import GCNConv
 import torch_geometric as tg
+
+try:
+    from baselines.caw.caw import CAWN
+    CAWN_IMPORT_ERROR = None
+except ImportError as exc:
+    CAWN = None
+    CAWN_IMPORT_ERROR = exc
+
+try:
+    from baselines.sdgnn.sdgnn import SDGNN
+    SDGNN_IMPORT_ERROR = None
+except ImportError as exc:
+    SDGNN = None
+    SDGNN_IMPORT_ERROR = exc
+
+try:
+    from baselines.sgcn.sgcn import SignedGCN
+    SIGNED_GCN_IMPORT_ERROR = None
+except ImportError as exc:
+    SignedGCN = None
+    SIGNED_GCN_IMPORT_ERROR = exc
 
 class GraphAttentionEmbedding(torch.nn.Module):
     
@@ -87,6 +105,8 @@ class STGNN (torch.nn.Module):
         self.seen_ei = torch.cat([self.seen_pos_ei, self.seen_neg_ei], dim=1)
         self.disc_timecuts = [0]
         if model_name == 'sgcn':
+            if SignedGCN is None:
+                raise ImportError("SignedGCN baseline requires torch_sparse") from SIGNED_GCN_IMPORT_ERROR
             if self.debug:
                 print (num_feats, embedding_dim, num_layers)
             self.model = SignedGCN(num_feats, embedding_dim, num_layers=num_layers, device=device).to(device=device)
@@ -98,12 +118,16 @@ class STGNN (torch.nn.Module):
                 ReLU(inplace=True),
             ])
         elif model_name == 'sgclstm':
+            if SignedGCN is None:
+                raise ImportError("SGCN-LSTM baseline requires torch_sparse") from SIGNED_GCN_IMPORT_ERROR
             self.gmodel = SignedGCN(num_feats, embedding_dim, num_layers=num_layers, device=device).to(device=device)
             self.tmodel = LSTM(embedding_dim, embedding_dim).to(device=device)
             self.model = torch.nn.Sequential(self.gmodel, self.tmodel)
         elif model_name == 'sigat':
             self.model = SiGAT(4, num_feats, num_nodes, embedding_dim, device=device).to(device=device)
         elif model_name == 'sdgnn':
+            if SDGNN is None:
+                raise ImportError("SDGNN baseline dependencies are not available") from SDGNN_IMPORT_ERROR
             self.model = SDGNN(4, num_feats, num_nodes, embedding_dim, device=device).to(device=device)
         elif model_name == 'tgn':
             self.mem_model = TGNMemory (num_nodes=num_nodes, raw_msg_dim=nwts, 
@@ -165,6 +189,8 @@ class STGNN (torch.nn.Module):
                                                     time_enc=TimeEncoder(time_dim),
                                                     dropout=dropout).to(device)
         elif model_name == 'caw':
+            if CAWN is None:
+                raise ImportError("CAW baseline dependencies are not available") from CAWN_IMPORT_ERROR
             self.model = CAWN(num_feats, embedding_dim, num_layers=2, lamb=0, device=device).to(device=device)
 
         if task == 'signlink_class':
@@ -322,7 +348,7 @@ class STGNN (torch.nn.Module):
         if self.task == "signlink_class":
             return (torch.softmax(value, dim=1) if not classify else value.argmax(dim=1).squeeze())
         elif self.task in ["sign_class", "link_pred"]:
-            return (torch.sigmoid(value) if not classify else torch.where(value>0.5, 1., 0.)).squeeze()
+            return (torch.sigmoid(value) if not classify else torch.where(value > 0, 1., 0.)).squeeze()
         elif self.task == "signwt_pred":
             return value.squeeze()
 

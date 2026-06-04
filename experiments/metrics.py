@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+from typing import Dict, Iterable
+
+import numpy as np
+from sklearn.metrics import (
+    average_precision_score,
+    balanced_accuracy_score,
+    f1_score,
+    roc_auc_score,
+)
+
+
+def binary_classification_metrics(
+    y_true: Iterable[int],
+    y_prob: Iterable[float],
+) -> Dict[str, float]:
+    y_true = np.asarray(list(y_true), dtype=int)
+    y_prob = np.asarray(list(y_prob), dtype=float)
+    y_pred = (y_prob >= 0.5).astype(int)
+
+    result = {
+        "F1_weighted": float(f1_score(y_true, y_pred, average="weighted", zero_division=0)),
+        "F1_macro": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
+        "F1_micro": float(f1_score(y_true, y_pred, average="micro", zero_division=0)),
+        "negative_class_F1": float(f1_score(1 - y_true, 1 - y_pred, zero_division=0)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
+    }
+
+    if len(np.unique(y_true)) == 2:
+        result["AUROC"] = float(roc_auc_score(y_true, y_prob))
+        result["PR_AUC_negative"] = float(average_precision_score(1 - y_true, 1 - y_prob))
+    else:
+        result["AUROC"] = float("nan")
+        result["PR_AUC_negative"] = float("nan")
+
+    return result
+

@@ -4,7 +4,29 @@ from typing import Callable, Tuple
 import torch
 from torch import Tensor
 from torch.nn import Linear, GRUCell
-from torch_scatter import scatter, scatter_max, scatter_mean
+try:
+    from torch_scatter import scatter, scatter_max, scatter_mean
+except ImportError:
+    from torch_geometric.utils import scatter
+
+    def scatter_mean(src, index, dim=0, dim_size=None):
+        return scatter(src, index, dim=dim, dim_size=dim_size, reduce='mean')
+
+    def scatter_max(src, index, dim=0, dim_size=None):
+        if dim != 0:
+            raise NotImplementedError("Fallback scatter_max only supports dim=0")
+        if dim_size is None:
+            dim_size = int(index.max()) + 1 if index.numel() else 0
+
+        fill_value = torch.iinfo(src.dtype).min if not src.dtype.is_floating_point else -float('inf')
+        out = src.new_full((dim_size,), fill_value)
+        argmax = index.new_full((dim_size,), src.size(0))
+        for pos in range(src.size(0)):
+            idx = int(index[pos])
+            if src[pos] > out[idx]:
+                out[idx] = src[pos]
+                argmax[idx] = pos
+        return out, argmax
 
 from torch_geometric.nn.inits import zeros
 

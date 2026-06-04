@@ -1,11 +1,12 @@
 import torch
+import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import roc_auc_score, f1_score, confusion_matrix
 import pandas as pd
 
 from dataset_loaders import *
 
-__all__ = ['EarlyStopping', 'LRScheduler', 'get_embedding_loss', 'get_class_weights', 'get_dataset_stats', 'split_test_set_results', 'get_data'] 
+__all__ = ['EarlyStopping', 'LRScheduler', 'get_embedding_loss', 'get_class_weights', 'get_dataset_stats', 'split_test_set_results', 'get_data', 'seq_batches'] 
     
 class EarlyStopping():
     
@@ -43,21 +44,37 @@ class LRScheduler():
         self.kind = kind
         self.mode = mode
         if kind == 'plateau':
-            self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( 
+            kwargs = dict(
+                mode=self.mode,
+                patience=self.patience,
+                factor=self.factor,
+                min_lr=self.min_lr,
+            )
+            try:
+                self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                     self.optimizer,
-                    mode=self.mode,
-                    patience=self.patience,
-                    factor=self.factor,
-                    min_lr=self.min_lr,
-                    verbose=verbose
+                    verbose=verbose,
+                    **kwargs,
+                )
+            except TypeError:
+                self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    self.optimizer,
+                    **kwargs,
                 )
         else:
-            self.lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                    self.optimizer, 
-                    step_size=50, 
-                    gamma=factor,
-                    verbose=verbose
-                )
+            try:
+                self.lr_scheduler = torch.optim.lr_scheduler.StepLR(
+                        self.optimizer,
+                        step_size=50,
+                        gamma=factor,
+                        verbose=verbose
+                    )
+            except TypeError:
+                self.lr_scheduler = torch.optim.lr_scheduler.StepLR(
+                        self.optimizer,
+                        step_size=50,
+                        gamma=factor
+                    )
         
     def __call__(self, val_loss):
         if self.kind == 'plateau':
@@ -80,10 +97,10 @@ def get_class_weights(labels, num_classes=3):
     
     if num_classes == 3:
         total_labels = torch.cat((labels, torch.tensor([2]*labels.size(0), device=labels.device)))
-        w = compute_class_weight(class_weight='balanced', classes=[0, 1, 2], y=total_labels.cpu().numpy())
+        w = compute_class_weight(class_weight='balanced', classes=np.array([0, 1, 2]), y=total_labels.cpu().numpy())
         
     elif num_classes == 2:
-        w = compute_class_weight(class_weight='balanced', classes=[0, 1], y=labels.cpu().numpy())
+        w = compute_class_weight(class_weight='balanced', classes=np.array([0, 1]), y=labels.cpu().numpy())
         
     return torch.tensor(w, dtype=torch.float, device=labels.device)
 
