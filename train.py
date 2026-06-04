@@ -177,8 +177,15 @@ if __name__ == '__main__':
     random.seed(args.seed)
 
     dataset_path = osp.join('./data', args.dataset)
-    data, train_data, val_data, test_data = get_data(args.dataset, dataset_path, args.device, val_ratio=args.val_ratio, 
-                                                    test_ratio=args.test_ratio)
+    data, train_data, val_data, test_data = get_data(
+        args.dataset,
+        dataset_path,
+        args.device,
+        val_ratio=args.val_ratio,
+        test_ratio=args.test_ratio,
+        processed_dir=args.processed_dir,
+        max_events=args.max_events,
+    )
     # transductive
     train_nodes = torch.stack([train_data.src, train_data.dst]).unique()
     train_nodes_yes = torch.zeros(data.num_nodes, dtype=bool, device=args.device)

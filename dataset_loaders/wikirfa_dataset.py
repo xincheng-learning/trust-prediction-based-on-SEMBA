@@ -11,15 +11,17 @@ class tgn_wikirfa(InMemoryDataset):
 
     def __init__(self, root: str, edge_window_size: int = 10,
                  name = 'wikirfa',
+                 processed_dir_name: str = 'processed',
                  transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None):
         self.edge_window_size = edge_window_size
         self.name = name
+        self.processed_dir_name = processed_dir_name
         if self.name == 'wikirfa':
             self.url = 'https://snap.stanford.edu/data/wiki-RfA.txt.gz'
 
         super().__init__(root, transform, pre_transform)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
         
     @property
     def raw_file_names(self) -> str:
@@ -29,6 +31,10 @@ class tgn_wikirfa(InMemoryDataset):
     @property
     def processed_file_names(self) -> str:
         return 'data.pt'
+
+    @property
+    def processed_dir(self) -> str:
+        return osp.join(self.root, self.processed_dir_name)
 
     @property
     def num_nodes(self) -> int:
@@ -41,7 +47,7 @@ class tgn_wikirfa(InMemoryDataset):
         os.unlink(path)
 
     def process(self):
-        with open(self.raw_paths[0], 'r') as f:
+        with open(self.raw_paths[0], 'r', encoding='utf-8') as f:
             data = f.read().split('\n')
             data = [data[i:i + 7] for i in range(0, len(data), 8)][:-1]            
             data = [line for line in data if line[5][4:] != '']   #Removing dates with no entries
@@ -92,7 +98,10 @@ class tgn_wikirfa(InMemoryDataset):
 
             stamps_raw = [int(line[5]) for line in data]
             t = torch.tensor(stamps_raw).to(torch.long)
-            t_sorted, ix = t.sort(descending=True) #Sort by descending, since the earliest date has most seconds passed
+            if self.processed_dir_name == 'processed2':
+                t_sorted, ix = t.sort()
+            else:
+                t_sorted, ix = t.sort(descending=True) #Sort by descending, since the earliest date has most seconds passed
 
             edge_index = edge_index[:, ix]
             signs = signs[ix]
@@ -104,7 +113,10 @@ class tgn_wikirfa(InMemoryDataset):
             t = t_sorted
             y = signs
             
-            assert sorted(t.cpu().tolist(), reverse=True) == t.cpu().tolist()
+            if self.processed_dir_name == 'processed2':
+                assert sorted(t.cpu().tolist()) == t.cpu().tolist()
+            else:
+                assert sorted(t.cpu().tolist(), reverse=True) == t.cpu().tolist()
             
 #             print(edge_index.size())
 #             print(signs.size())

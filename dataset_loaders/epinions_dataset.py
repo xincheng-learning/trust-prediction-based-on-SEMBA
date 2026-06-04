@@ -11,15 +11,17 @@ class tgn_epinions(InMemoryDataset):
 
     def __init__(self, root: str, edge_window_size: int = 10,
                  name = 'epinions',
+                 processed_dir_name: str = 'processed',
                  transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None):
         self.edge_window_size = edge_window_size
         self.name = name
+        self.processed_dir_name = processed_dir_name
         if self.name == 'epinions':
             self.url = 'http://konect.cc/files/download.tsv.epinions.tar.bz2'
 
         super().__init__(root, transform, pre_transform)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
         
     @property
     def raw_file_names(self) -> str:
@@ -31,6 +33,10 @@ class tgn_epinions(InMemoryDataset):
         return 'data.pt'
 
     @property
+    def processed_dir(self) -> str:
+        return osp.join(self.root, self.processed_dir_name)
+
+    @property
     def num_nodes(self) -> int:
         return self.data.edge_index.max().item() + 1
 
@@ -40,7 +46,7 @@ class tgn_epinions(InMemoryDataset):
         os.unlink(path)
 
     def process(self):
-        with open(self.raw_paths[0], 'r') as f:
+        with open(self.raw_paths[0], 'r', encoding='utf-8') as f:
             data = f.read().split('\n')[2:]
             data = [[x for x in line.split(' ')] for line in data][1:]
             
@@ -53,8 +59,7 @@ class tgn_epinions(InMemoryDataset):
 
             signs_raw = torch.tensor(signs_raw, dtype=torch.float)
             mask_zero = (signs_raw != 0)
-            signs = signs_raw.to(torch.long)[mask_zero]
-            signs = (signs_raw > 0) * 1
+            signs = (signs_raw[mask_zero] > 0).long()
 
             edge_index = torch.tensor(edge_index, dtype=torch.long).t()[:, mask_zero]
             edge_index = edge_index - edge_index.min()

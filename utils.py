@@ -205,16 +205,22 @@ def split_test_set_results(inference_data, probabilities, pred, true, new_node_m
     print(f'Results for two new nodes - ROC_AUC: {roc_two:.4f}, F1: {fpr1_two:.4f}, FPR: {f1_two:.4f}')
     print()
     
-def get_data(NAME, path, device, val_ratio=0.15, test_ratio=0.15):
+def get_data(NAME, path, device, val_ratio=0.15, test_ratio=0.15,
+             processed_dir='processed', max_events=None):
 
     if NAME == 'BitcoinOTC-1' or NAME == 'BitcoinAlpha-1':
-        dataset = tgn_bitcoin(path, edge_window_size=1, name=NAME)
+        dataset = tgn_bitcoin(path, edge_window_size=1, name=NAME,
+                              processed_dir_name=processed_dir)
     elif NAME == 'epinions':
-        dataset = tgn_epinions(path, edge_window_size=1, name=NAME)
+        dataset = tgn_epinions(path, edge_window_size=1, name=NAME,
+                               processed_dir_name=processed_dir)
     elif NAME == 'wikirfa':
-        dataset = tgn_wikirfa(path, edge_window_size=1, name=NAME)
+        dataset = tgn_wikirfa(path, edge_window_size=1, name=NAME,
+                              processed_dir_name=processed_dir)
 
     data = dataset[0].to(device)
+    if max_events is not None:
+        data = data[:max_events]
 
     train_data, val_data, test_data = data.train_val_test_split(val_ratio=val_ratio, test_ratio=test_ratio)
 

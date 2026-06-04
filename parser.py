@@ -23,6 +23,8 @@ def parse_args (args):
     parser.add_argument('--embedding_dim', default=64, type=int)
     parser.add_argument('--null_nsamples', default=1, type=int)
     parser.add_argument('--seed', default=42, type=int)
+    parser.add_argument('--processed_dir', default='processed', type=str)
+    parser.add_argument('--max_events', default=None, type=int)
 
     args = parser.parse_args(args)
     
