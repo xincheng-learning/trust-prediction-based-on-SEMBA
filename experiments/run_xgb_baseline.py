@@ -17,8 +17,22 @@ from experiments.metrics import binary_classification_metrics
 from utils import get_data
 
 
-def _rows_from_split(data):
-    return build_sign_class_rows(events_from_temporal_data(data))
+def _rows_from_split(data, strict_timestamp=False):
+    return build_sign_class_rows(
+        events_from_temporal_data(data),
+        strict_timestamp=strict_timestamp,
+    )
+
+
+def _rows_from_global_stream(data, train_data, val_data, strict_timestamp=False):
+    all_df = pd.DataFrame(_rows_from_split(data, strict_timestamp))
+    train_end = int(train_data.num_events)
+    val_end = train_end + int(val_data.num_events)
+    return (
+        all_df.iloc[:train_end].reset_index(drop=True),
+        all_df.iloc[train_end:val_end].reset_index(drop=True),
+        all_df.iloc[val_end:].reset_index(drop=True),
+    )
 
 
 def main():
@@ -28,6 +42,17 @@ def main():
     parser.add_argument("--max_events", type=int, default=5000)
     parser.add_argument("--results_dir", default="results/xgb")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--strict_timestamp",
+        action="store_true",
+        help="Build features for all edges with the same timestamp before updating history.",
+    )
+    parser.add_argument(
+        "--history_scope",
+        choices=["split_reset", "global_online"],
+        default="split_reset",
+        help="Use split-local histories or one chronological stream split after feature building.",
+    )
     args = parser.parse_args()
 
     started = time.time()
@@ -39,9 +64,17 @@ def main():
         max_events=args.max_events,
     )
 
-    train_df = pd.DataFrame(_rows_from_split(train_data))
-    val_df = pd.DataFrame(_rows_from_split(val_data))
-    test_df = pd.DataFrame(_rows_from_split(test_data))
+    if args.history_scope == "global_online":
+        train_df, val_df, test_df = _rows_from_global_stream(
+            data,
+            train_data,
+            val_data,
+            args.strict_timestamp,
+        )
+    else:
+        train_df = pd.DataFrame(_rows_from_split(train_data, args.strict_timestamp))
+        val_df = pd.DataFrame(_rows_from_split(val_data, args.strict_timestamp))
+        test_df = pd.DataFrame(_rows_from_split(test_data, args.strict_timestamp))
     fit_df = pd.concat([train_df, val_df], ignore_index=True)
 
     x_train = fit_df[FEATURE_COLUMNS]
@@ -70,11 +103,21 @@ def main():
 
     y_prob = model.predict_proba(x_test)[:, 1]
     metrics = binary_classification_metrics(y_test, y_prob)
+    always_positive_metrics = binary_classification_metrics(
+        y_test,
+        [1.0] * len(y_test),
+    )
+    metrics.update({
+        f"always_positive_{key}": value
+        for key, value in always_positive_metrics.items()
+    })
     metrics.update({
         "dataset": args.dataset,
         "model": "xgb_history_features",
         "task": "sign_class",
         "processed_dir": args.processed_dir,
+        "strict_timestamp": args.strict_timestamp,
+        "history_scope": args.history_scope,
         "max_events": args.max_events,
         "train_events": int(train_data.num_events),
         "val_events": int(val_data.num_events),
@@ -99,4 +142,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

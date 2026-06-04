@@ -49,6 +49,7 @@ def _ratio(num: float, den: float) -> float:
 def build_sign_class_rows(
     events: Iterable[Event],
     high_visibility_min_events: int = 10,
+    strict_timestamp: bool = False,
 ) -> List[FeatureRow]:
     out_pos = defaultdict(int)
     out_neg = defaultdict(int)
@@ -65,7 +66,7 @@ def build_sign_class_rows(
 
     sorted_events = sorted(events, key=lambda row: row["t"])
 
-    for event in sorted_events:
+    def append_feature_row(event: Event) -> None:
         src = int(event["src"])
         dst = int(event["dst"])
         t = int(event["t"])
@@ -118,6 +119,13 @@ def build_sign_class_rows(
             "label": float(label),
         })
 
+    def update_history(event: Event) -> None:
+        nonlocal max_visibility_seen
+        src = int(event["src"])
+        dst = int(event["dst"])
+        t = int(event["t"])
+        label = int(event["y"])
+
         if label == 1:
             out_pos[src] += 1
             in_pos[dst] += 1
@@ -136,6 +144,25 @@ def build_sign_class_rows(
         node_visibility[src] += 1
         node_visibility[dst] += 1
         max_visibility_seen = max(max_visibility_seen, node_visibility[src], node_visibility[dst])
+
+    if strict_timestamp:
+        idx = 0
+        while idx < len(sorted_events):
+            t = int(sorted_events[idx]["t"])
+            next_idx = idx
+            while next_idx < len(sorted_events) and int(sorted_events[next_idx]["t"]) == t:
+                next_idx += 1
+
+            same_time_events = sorted_events[idx:next_idx]
+            for event in same_time_events:
+                append_feature_row(event)
+            for event in same_time_events:
+                update_history(event)
+            idx = next_idx
+    else:
+        for event in sorted_events:
+            append_feature_row(event)
+            update_history(event)
 
     return rows
 
