@@ -10,10 +10,12 @@ class tgn_bitcoin(InMemoryDataset):
 
     def __init__(self, root: str, edge_window_size: int = 10,
                  name = 'BitcoinOTC-1',
+                 processed_dir_name: str = 'processed',
                  transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None):
         self.edge_window_size = edge_window_size
         self.name = name
+        self.processed_dir_name = processed_dir_name
         if self.name == 'BitcoinOTC-1':
             self.url = 'https://snap.stanford.edu/data/soc-sign-bitcoinotc.csv.gz'
             
@@ -21,7 +23,7 @@ class tgn_bitcoin(InMemoryDataset):
             self.url = 'https://snap.stanford.edu/data/soc-sign-bitcoinalpha.csv.gz'
             
         super().__init__(root, transform, pre_transform)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
         
     @property
     def raw_file_names(self) -> str:
@@ -37,6 +39,10 @@ class tgn_bitcoin(InMemoryDataset):
         return 'data.pt'
 
     @property
+    def processed_dir(self) -> str:
+        return osp.join(self.root, self.processed_dir_name)
+
+    @property
     def num_nodes(self) -> int:
         return self.data.edge_index.max().item() + 1
 
@@ -46,7 +52,7 @@ class tgn_bitcoin(InMemoryDataset):
         os.unlink(path)
 
     def process(self):
-        with open(self.raw_paths[0], 'r') as f:
+        with open(self.raw_paths[0], 'r', encoding='utf-8') as f:
             data = f.read().split('\n')[:-1]
             data = [[x for x in line.split(',')] for line in data]
 
