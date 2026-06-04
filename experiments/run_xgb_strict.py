@@ -56,7 +56,7 @@ def _write_manifest(out_dir: Path, args, split_rows):
 def _append_csv(path: Path, rows):
     df = pd.DataFrame(rows)
     if path.exists():
-        existing = pd.read_csv(path)
+        existing = pd.read_csv(path, low_memory=False)
         pd.concat([existing, df], ignore_index=True, sort=False).to_csv(path, index=False)
     else:
         df.to_csv(path, index=False)
