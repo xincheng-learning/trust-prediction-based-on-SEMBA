@@ -1,0 +1,54 @@
+# System / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Local worktrees and experiment outputs
+.worktrees/
+worktrees/
+results/
+runs/
+wandb/
+tensorboard/
+lightning_logs/
+
+# Dataset caches and local raw data.
+# Keep datasets local; the project README documents how to obtain them.
+data/
+**/processed2/
+
+# Model checkpoints and generated training artifacts
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.joblib
+*.onnx
+**/saved_models/
+test_summ_*.csv
+testTrans_summ_*.csv
+testInd_summ_*.csv
+
+# Temporary archives / downloaded bundles
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+TDAP-main*
