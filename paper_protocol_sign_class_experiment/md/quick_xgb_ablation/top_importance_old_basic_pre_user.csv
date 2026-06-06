@@ -1,0 +1,11 @@
+feature_group,feature,importance
+old_basic_pre_user,dst_in_neg,0.4421233832836151
+old_basic_pre_user,src_out_neg,0.17164164781570435
+old_basic_pre_user,dst_in_pos_ratio,0.13432402312755584
+old_basic_pre_user,src_pos_ratio,0.05760420560836792
+old_basic_pre_user,dst_recency_log,0.03632671907544136
+old_basic_pre_user,q_dst,0.03569942452013493
+old_basic_pre_user,src_recency_log,0.03143621720373631
+old_basic_pre_user,status_gap,0.031342798843979836
+old_basic_pre_user,dst_in_pos,0.030150481313467026
+old_basic_pre_user,src_out_pos,0.029351112619042396

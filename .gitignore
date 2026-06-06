@@ -22,6 +22,7 @@ env/
 .worktrees/
 worktrees/
 results/
+**/results*/
 runs/
 wandb/
 tensorboard/

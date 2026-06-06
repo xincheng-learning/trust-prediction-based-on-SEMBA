@@ -1,0 +1,11 @@
+feature_group,feature,importance
+all_current,dst_seen_before,0.39850707054138185
+all_current,dst_in_neg,0.2192222774028778
+all_current,src_out_neg,0.09420290887355805
+all_current,dst_in_pos_ratio,0.06080442890524864
+all_current,dst_trusted_ratio,0.047684512287378314
+all_current,src_seen_before,0.03957328423857689
+all_current,src_pos_ratio,0.025655360519886018
+all_current,dst_visibility_share_of_max,0.014897587709128857
+all_current,src_out_pos,0.01375460010021925
+all_current,dst_recency_log,0.013042003102600574

@@ -1,0 +1,10 @@
+feature_group,feature,importance
+target_reputation_user,dst_in_neg,0.551842188835144
+target_reputation_user,dst_trusted_ratio,0.1377803310751915
+target_reputation_user,dst_in_pos_ratio,0.12581662088632584
+target_reputation_user,dst_visibility_share_of_max,0.0404976636171341
+target_reputation_user,dst_visibility_log,0.03621496632695198
+target_reputation_user,dst_high_visibility,0.031911402568221094
+target_reputation_user,dst_in_pos,0.03105027601122856
+target_reputation_user,q_dst,0.026394863426685334
+target_reputation_user,dst_trusted_in_count,0.018491706997156142

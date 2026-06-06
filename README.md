@@ -19,6 +19,52 @@ Arxiv: [https://arxiv.org/abs/2207.03408](https://arxiv.org/abs/2207.03408)
 ![](pipeline.png)
 &nbsp;
 
+## Local Reproduction and Protocol Audit
+
+This branch, `exp/xgb-history`, adds a local experiment suite for auditing SEMBA on
+BitcoinOTC-1 under two different temporal protocols:
+
+1. **Strict online protocol**: for an event at time `t`, the model may only use
+   events strictly before `t`; it predicts the current event first, then writes
+   the current event into memory/history.
+2. **Paper/public-code protocol**: this intentionally follows the old
+   `train.py` path with `to_update=True`. In the public code, the current batch
+   is written into memory/history before `mem2emb` predicts that same batch, so
+   this protocol has batch-level information leakage risk. It should be treated
+   as a reproduction/audit protocol, not as a strict online deployment protocol.
+
+Key BitcoinOTC-1 `sign_class` findings from 5 seeds:
+
+| Protocol | Model | Main result |
+| --- | --- | --- |
+| Strict online | XGB-all | `F1_macro=0.6970`, `F1_negative=0.4900`, `PR_AUC_negative=0.5472`, `AUROC=0.8235` |
+| Strict online | SEMBA | `F1_macro=0.6524`, `F1_negative=0.4101`, `PR_AUC_negative=0.4096`, `AUROC=0.7505` |
+| Strict online | TGN | `F1_macro=0.6606`, `F1_negative=0.4036`, `PR_AUC_negative=0.4087`, `AUROC=0.7257` |
+| Paper/public-code | XGB with pair-history features | reaches `F1_bin=1.0000` and `AUROC=1.0000`, which is strong evidence of batch-inclusive leakage |
+| Paper/public-code | SEMBA-emb64 | `F1_bin=0.8547`, `AUROC=0.7899`; close to the paper BTC-Otc reference `F1=0.81`, `AUROC=0.79` |
+| Paper/public-code | TGN-emb64 | `F1_bin=0.8400`, `AUROC=0.8093`; close to the paper BTC-Otc reference `F1=0.74`, `AUROC=0.82` |
+
+Interpretation: under the strict online setting, handcrafted temporal history
+features with XGBoost are a very strong baseline and outperform the current
+local SEMBA/TGN runners on negative-class metrics. SEMBA's signed memory and
+long-term propagation remain useful relative to `semba-noprop`, but on this
+strict BitcoinOTC-1 experiment SEMBA is not a stable, decisive improvement over
+TGN. The paper/public-code protocol is useful for reproducing the historical
+code path, but its results should not be used as causal online-prediction
+evidence.
+
+Experiment entry points and reports:
+
+- Strict online comparison: `strict_xgb_comparison_experiment/`
+- Paper/public-code protocol audit: `paper_protocol_sign_class_experiment/`
+- Reusable runners: `experiments/run_xgb_paper_protocol.py`,
+  `experiments/run_graph_paper_protocol.py`,
+  `experiments/aggregate_paper_protocol_compare.py`
+- Protocol tests: `tests/test_paper_protocol_features.py`
+- Large raw result directories are intentionally ignored by `.gitignore`; the
+  committed Markdown reports and small charts summarize the reproducible
+  findings.
+
 ## Requirements
 We use Python 3.8 for this implementation. Our code extensively uses the following 3 libraries: 
 1. PyTorch 1.7 ([link](https://pytorch.org/get-started/locally/))
