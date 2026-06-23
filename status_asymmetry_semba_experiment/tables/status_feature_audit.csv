@@ -1,0 +1,8 @@
+check,status,evidence
+strict_timestamp_feature_build,pass,"global_online_feature_frames(..., strict_timestamp=True) predicts same-timestamp events before updating history"
+history_window,pass,features are constructed from dynamic_features state before update_history(event)
+train_only_scaler,pass,TrainOnlyStatusScaler.fit(train_status) only uses train split raw status features
+row_alignment_train,pass,24915 feature rows vs 24915 train events
+row_alignment_val,pass,5338 feature rows vs 5338 val events
+row_alignment_test,pass,5339 feature rows vs 5339 test events
+nan_or_inf,pass,all selected feature matrices checked for finite values

@@ -1,0 +1,25 @@
+feature,group,transform,definition,time_safety
+src_seen_before,source,flag,whether source appeared before current time,computed before current event update
+src_out_count_before,source,log1p(count),source historical outgoing edge count,time < current_time
+src_pos_out_count_before,source,log1p(count),source historical positive outgoing count,time < current_time
+src_neg_out_count_before,source,log1p(count),source historical negative outgoing count,time < current_time
+src_pos_out_ratio_before,source,ratio,positive outgoing ratio before prediction,time < current_time
+src_neg_out_ratio_before,source,ratio,negative outgoing ratio before prediction,time < current_time
+src_activity_log_before,source,log1p(count),source historical visibility/activity,time < current_time
+dst_seen_before,target,flag,whether target appeared before current time,computed before current event update
+dst_in_count_before,target,log1p(count),target historical incoming edge count,time < current_time
+dst_pos_in_count_before,target,log1p(count),target historical trusted incoming count,time < current_time
+dst_neg_in_count_before,target,log1p(count),target historical distrusted incoming count,time < current_time
+dst_pos_in_ratio_before,target,ratio,target positive incoming ratio,time < current_time
+dst_neg_in_ratio_before,target,ratio,target negative incoming ratio,time < current_time
+src_reputation_score_before,status,(pos_in-neg_in)/(in+1),source reputation score before prediction,time < current_time
+dst_reputation_score_before,status,(pos_in-neg_in)/(in+1),target reputation score before prediction,time < current_time
+status_gap_before,asymmetry,dst_rep-src_rep,target-source reputation gap,time < current_time
+activity_gap_before,asymmetry,dst_activity_log-src_activity_log,target-source visibility/activity gap,time < current_time
+reputation_gap_before,asymmetry,dst_rep-src_rep,alias for status gap for ablation readability,time < current_time
+dst_more_reputable_flag,asymmetry,flag,target reputation exceeds source reputation,time < current_time
+src_more_negative_flag,source,flag,source has higher historical negative than positive outgoing ratio,time < current_time
+src_status_known,missingness,flag,source status/history observed before prediction,time < current_time
+dst_status_known,missingness,flag,target status/history observed before prediction,time < current_time
+both_status_known,missingness,flag,both endpoints have prior history,time < current_time
+either_status_unknown,missingness,flag,at least one endpoint is cold-start,time < current_time
